@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
 import { KnownDevices } from 'puppeteer';
-const iPhone = KnownDevices['Galaxy Tab S4 landscape'];
+const iPhone = KnownDevices['iPhone 15'];
 
 @Injectable()
 export class AppService {
   async getVideoInfo(uri: string): Promise<any> {
-    uri = 'https://l.likee.video/v/B0qECv';
+    uri = 'https://l.likee.video/p/H7rCwn';
     const browser = await puppeteer.launch({
-      headless: true, // Можно включить headless: true для работы в фоне
+      headless: false, // Можно включить headless: true для работы в фоне
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -18,6 +18,17 @@ export class AppService {
 
     const page = await browser.newPage();
 
+    await page.setRequestInterception(true); // Включаем перехват запросов
+
+    page.on('request', async (request) => {
+      const url = request.url();
+      if (url.includes('api.like-video.com') && request.method() === 'POST') {
+        console.log(`🎯 Перехвачен API-запрос: ${url}`);
+        console.log(`📌 Данные:`, request.postData());
+      }
+      request.continue();
+    });
+
     // Эмулируем мобильное устройство
     await page.emulate(iPhone);
 
@@ -26,7 +37,12 @@ export class AppService {
     } catch (error) {
       console.error('Ошибка загрузки страницы:', error);
     }
-
+    function wait(time) {
+      return new Promise(resolve => {
+        setTimeout(resolve, time);
+      });
+    }
+    await wait(500000);
     // Достаем описание видео
     const jsonData = await page.evaluate(() => {
       // Получаем все теги <script>
