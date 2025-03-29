@@ -29,6 +29,18 @@ export class AppService {
       request.continue();
     });
 
+    page.on('response', async (response) => {
+      const url = response.url();
+      if (url.includes('api.like-video.com') && response.request().method() === 'POST') {
+        try {
+          const responseData = await response.json();
+          console.log(`📝 Ответ:`, JSON.stringify(responseData, null, 2));
+        } catch (error) {
+          console.error('Ошибка при обработке ответа:', error);
+        }
+      }
+    });
+
     // Эмулируем мобильное устройство
     await page.emulate(iPhone);
 
